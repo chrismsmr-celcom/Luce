@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "./api";
 
 // Local persistence for the UI shell. Swap these hooks for calls to the Luce
 // backend (/api/connections, /api/history…) once it is wired up.
@@ -39,6 +41,9 @@ export type ToolkitId =
   | "slack"
   | "googledrive"
   | "googlecalendar"
+  | "googlesheets"
+  | "googlephotos"
+  | "googlesearchconsole"
   | "github"
   | "twitter"
   | "whatsapp"
@@ -49,14 +54,35 @@ export const TOOLKITS: { id: ToolkitId; name: string; desc: string; mark: string
   { id: "slack", name: "Slack", desc: "Suivre canaux et messages directs.", mark: "S" },
   { id: "googledrive", name: "Google Drive", desc: "Accéder à tes documents.", mark: "D" },
   { id: "googlecalendar", name: "Google Calendar", desc: "Gérer ton agenda.", mark: "C" },
+  {
+    id: "googlesheets",
+    name: "Google Sheets",
+    desc: "Lire et mettre à jour tes feuilles.",
+    mark: "F",
+  },
+  { id: "googlephotos", name: "Google Photos", desc: "Retrouver tes photos.", mark: "P" },
+  {
+    id: "googlesearchconsole",
+    name: "Search Console",
+    desc: "Suivre la performance de ton site.",
+    mark: "Q",
+  },
   { id: "github", name: "GitHub", desc: "Repos, issues et pull requests.", mark: "G" },
   { id: "twitter", name: "X (Twitter)", desc: "Rédiger et publier tes posts.", mark: "X" },
   { id: "whatsapp", name: "WhatsApp", desc: "Envoyer des messages.", mark: "W" },
   { id: "supabase", name: "Supabase", desc: "Interroger tes bases de données.", mark: "B" },
 ];
 
+// Real connection state, read from the backend (Composio). Returns the connected
+// toolkit ids and a `refresh` function; `loading`/`error` describe the last fetch.
 export function useConnections() {
-  return usePersisted<ToolkitId[]>("luce.connections", ["gmail", "slack", "googledrive"]);
+  const q = useQuery({ queryKey: ["connections"], queryFn: api.connections, staleTime: 15_000 });
+  const qc = useQueryClient();
+  const ids = Object.entries(q.data ?? {})
+    .filter(([, on]) => on)
+    .map(([id]) => id as ToolkitId);
+  const refresh = useCallback(() => qc.invalidateQueries({ queryKey: ["connections"] }), [qc]);
+  return [ids, refresh, { loading: q.isLoading, error: q.error as Error | null }] as const;
 }
 
 export type Note = { id: string; title: string; body: string; pinned: boolean; updatedAt: number };
@@ -89,4 +115,18 @@ export function useSettings() {
     briefing: true,
     language: "fr",
   });
+}
+
+// The autonomy level is enforced by the backend, so the server is the source of truth.
+export function useAutonomy() {
+  const q = useQuery({ queryKey: ["me"], queryFn: api.me, staleTime: 30_000 });
+  const qc = useQueryClient();
+  const set = useCallback(
+    async (level: "ask" | "draft" | "auto") => {
+      await api.setAutonomy(level);
+      await qc.invalidateQueries({ queryKey: ["me"] });
+    },
+    [qc],
+  );
+  return [q.data?.autonomy ?? "ask", set, { loading: q.isLoading }] as const;
 }

@@ -1,15 +1,20 @@
+import logging
 import os
+import re
 from typing import Any
 
 from dotenv import load_dotenv
 from composio import Composio
 
+from toolkits import TOOLKITS as _TOOLKITS
 from database import (
     get_composio_session_id,
     save_composio_session_id,
 )
 
 load_dotenv()
+
+logger = logging.getLogger("luce.composio")
 
 
 COMPOSIO_API_KEY = os.getenv("COMPOSIO_API_KEY")
@@ -22,27 +27,13 @@ composio = Composio(
     api_key=COMPOSIO_API_KEY
 )
 
-# Tous les toolkits disponibles pour Luce
-# ⚠️ Slugs exacts Composio : "googlesearchconsole" (pas gsearchconsole).
-# "googlemaps" n'est pas un slug valide Composio — retiré.
-TOOLKITS = [
-    "gmail",
-    "googlecalendar",
-    "googledrive",
-    "github",
-    "twitter",
-    "whatsapp",
-    "supabase",
-    "googlesheets",
-    "googlephotos",
-    "googlesearchconsole",
-]
+TOOLKITS = list(_TOOLKITS)
 
 # Bump this number whenever TOOLKITS changes.
 # Sessions saved with an older version are NOT restored:
 # a new session (with the new toolkits) is created instead.
 # This fixes: "Toolkit 'X' is not allowed for this session"
-SESSION_VERSION = 6
+SESSION_VERSION = 7
 
 
 def _toolkit_not_allowed(exc: Exception) -> bool:
@@ -63,7 +54,6 @@ def _invalid_toolkit_slugs(exc: Exception) -> set:
     text = str(exc)
     if "Invalid toolkit slugs" not in text:
         return set()
-    import re
     m = re.search(r"Invalid toolkit slugs:\s*([a-zA-Z0-9_,\s]+?)\.", text)
     if not m:
         return set()
@@ -95,9 +85,7 @@ def _create_session(user_id: str, toolkits: list):
         invalid = _invalid_toolkit_slugs(exc)
         if invalid:
             remaining = [t for t in toolkits if t not in invalid]
-            print(
-                f"[Composio] Invalid toolkit slugs, excluded: {sorted(invalid)}"
-            )
+            logger.warning("Invalid toolkit slugs excluded: %s", sorted(invalid))
             if not remaining:
                 raise
             return composio.create(
@@ -110,7 +98,6 @@ def _create_session(user_id: str, toolkits: list):
 
         if "auth configs" in text and "cannot be auto-created" in text:
 
-            import re
             rejected = re.findall(
                 r"cannot be auto-created: ([a-zA-Z0-9_,\s]+?)\.",
                 text,
@@ -130,10 +117,7 @@ def _create_session(user_id: str, toolkits: list):
                     if name not in rejected_names
                 ]
 
-                print(
-                    f"[Composio] Toolkits requiring an auth config, "
-                    f"excluded from session: {sorted(rejected_names)}"
-                )
+                logger.warning("Toolkits requiring an auth config excluded: %s", sorted(rejected_names))
 
                 if not remaining:
                     raise
@@ -173,16 +157,13 @@ def get_or_create_session(user_id: str):
 
         try:
             session = composio.use(session_id)
-            print(f"[Composio] Restored session {session_id} for user {user_id}")
+            logger.info("Restored Composio session for user %s", user_id)
             return session
         except Exception as exc:
-            print(f"[Composio] Could not restore session {session_id}: {exc}")
+            logger.warning("Could not restore Composio session for user %s: %s", user_id, exc)
 
     elif stored:
-        print(
-            f"[Composio] Session version mismatch (stored: {stored.split(':')[0]}, "
-            f"current: v{SESSION_VERSION}). Creating a new session."
-        )
+        logger.info("Composio session version mismatch for user %s; creating a new session", user_id)
 
     # 2. Create a new session
 
@@ -195,7 +176,7 @@ def get_or_create_session(user_id: str):
         session_id=version_prefix + session.session_id,
     )
 
-    print(f"[Composio] Created session {session.session_id} for user {user_id}")
+    logger.info("Created Composio session for user %s", user_id)
 
     return session
 
@@ -250,10 +231,7 @@ def execute_tool(
         if not _toolkit_not_allowed(exc):
             raise
 
-        print(
-            f"[Composio] Toolkit not allowed on current session "
-            f"({tool_slug}). Recreating session and retrying..."
-        )
+        logger.warning("Toolkit not allowed on current session (%s); recreating session", tool_slug)
 
         # Force a fresh session (bypasses the versioned restore)
         save_composio_session_id(user_id=user_id, session_id="")
