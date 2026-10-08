@@ -51,6 +51,13 @@ export type ChatResult = {
 
 export type Me = { toolkits: string[]; autonomy: Autonomy; pending_actions: PendingAction[] };
 
+export type Attachment = {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number | null;
+  url?: string;
+};
 
 export type RealMessage = {
   id: string;
@@ -59,10 +66,13 @@ export type RealMessage = {
   subject: string;
   preview: string;
   body?: string;
+  html?: string;
   date: string;
   unread: boolean;
   priority: boolean;
+  attachments?: Attachment[];
 };
+
 export type RealEvent = { id: string; title: string; start: string; end: string; allDay: boolean; who: string };
 export type RealFile = {
   id: string;
