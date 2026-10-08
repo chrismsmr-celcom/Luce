@@ -22,9 +22,9 @@ function Today() {
   const [settings] = useSettings();
   const inbox = useInbox();
   const agenda = useAgenda();
-  const me = useQuery({ queryKey: ["me"], queryFn: api.me, staleTime: 30_000 });
+  const arts = useQuery({ queryKey: ["artifacts"], queryFn: api.artifacts, staleTime: 30_000 });
   const priorities = inbox.items.filter((m) => m.priority || m.unread).slice(0, 6);
-  const pending = me.data?.pending_actions ?? [];
+  const pending = (arts.data?.items ?? []).filter((a) => a.status === "new").slice(0, 6);
   const hour = new Date().getHours();
   const hello = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
 
@@ -38,7 +38,7 @@ function Today() {
         </div>
         <p className="mt-3 max-w-2xl font-display text-xl leading-snug sm:text-2xl">
           {priorities.length} messages demandent ton attention, {agenda.items.length} réunions aujourd'hui et{" "}
-          {pending.length} actions attendent ta validation.
+          {pending.length} propositions attendent ta validation.
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
           <Link to="/inbox" className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
@@ -76,7 +76,7 @@ function Today() {
         <Card title="À valider" icon={Layers} to="/artefacts" className="md:col-span-2 xl:col-span-1">
           {pending.length === 0 && <Empty text="Rien à valider pour l'instant." />}
           {pending.map((a) => (
-            <Row key={a.id} title={a.tool} meta="" tag="Action" />
+            <Row key={a.id} title={a.title} meta={a.sources.join(" · ")} tag={a.urgency === "high" ? "Urgent" : "À valider"} />
           ))}
         </Card>
       </div>
