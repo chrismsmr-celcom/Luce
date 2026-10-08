@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Reply, Sparkle } from "lucide-react";
+import { ArrowLeft, Reply, Sparkle, FileText, Download, ExternalLink } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { PageHeader } from "@/components/luce/app-shell";
 import { Button } from "@/components/ui/button";
 import { formatMessageTime, senderName, useInbox } from "@/lib/luce-data";
+import type { Attachment } from "@/lib/api";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/inbox")({
@@ -27,7 +30,6 @@ const TABS = [
 function InboxPage() {
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("all");
   const { connected, items, loading, error } = useInbox();
-  // Slack n'est pas encore lu côté backend : seul Gmail alimente l'inbox pour l'instant.
   const all = items.map((m) => ({
     ...m,
     from: senderName(m.from),
@@ -103,7 +105,66 @@ function InboxPage() {
                 </span>
                 <h2 className="mt-3 font-display text-xl font-semibold">{selected.subject}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">{selected.from} · {selected.time}</p>
-                <p className="mt-6 whitespace-pre-wrap break-words leading-relaxed">{selected.body || selected.preview}</p>
+                
+                {/* RENDU RICHE DU CONTENU */}
+                <div className="mt-6 prose prose-sm max-w-none text-gray-800">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      a: ({ href, children }) => {
+                        if (!href) return <a>{children}</a>;
+                        const ext = href.split(".").pop()?.toLowerCase();
+                        if (["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext || "")) {
+                          return <img src={href} alt={String(children)} className="max-w-full h-auto rounded-xl border border-gray-200 my-4" />;
+                        }
+                        if (ext === "pdf") {
+                          return (
+                            <div className="my-4 rounded-xl border border-gray-200 overflow-hidden">
+                              <div className="bg-gray-100 p-3 flex items-center gap-2 border-b border-gray-200">
+                                <FileText className="w-5 h-5 text-red-500" />
+                                <span className="font-medium text-sm text-gray-700">Aperçu PDF</span>
+                              </div>
+                              <iframe src={href} className="w-full h-96 border-none" title="PDF Viewer" />
+                            </div>
+                          );
+                        }
+                        return (
+                          <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-600 hover:underline">
+                            {children} <ExternalLink className="w-3 h-3" />
+                          </a>
+                        );
+                      },
+                    }}
+                  >
+                    {selected.html || selected.body || selected.preview || ""}
+                  </ReactMarkdown>
+
+                  {/* AFFICHAGE DES PIÈCES JOINTES */}
+                  {selected.attachments && selected.attachments.length > 0 && (
+                    <div className="mt-6 pt-6 border-t border-gray-200">
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Pièces jointes ({selected.attachments.length})</h3>
+                      <div className="grid gap-3">
+                        {selected.attachments.map((att: Attachment) => (
+                          <div key={att.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                              <FileText className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{att.filename}</p>
+                              <p className="text-xs text-gray-500">{att.mimeType}</p>
+                            </div>
+                            {att.url && (
+                              <a href={att.url} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-white rounded-md">
+                                <Download className="w-4 h-4 text-gray-600" />
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="mt-6 rounded-xl bg-muted p-4">
                   <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     <Sparkle className="size-3.5" /> Suggestion de Luce
