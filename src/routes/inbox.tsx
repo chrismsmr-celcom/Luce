@@ -3,8 +3,7 @@ import { useState } from "react";
 import { ArrowLeft, Reply, Sparkle } from "lucide-react";
 import { PageHeader } from "@/components/luce/app-shell";
 import { Button } from "@/components/ui/button";
-import { EMAILS, SLACK } from "@/lib/luce-demo";
-import { useConnections } from "@/lib/luce-store";
+import { formatMessageTime, senderName, useInbox } from "@/lib/luce-data";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/inbox")({
@@ -27,10 +26,13 @@ const TABS = [
 
 function InboxPage() {
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("all");
-  const [connections] = useConnections();
-  const all = [...EMAILS, ...SLACK].filter((m) =>
-    m.source === "gmail" ? connections.includes("gmail") : connections.includes("slack"),
-  );
+  const { connected, items, loading, error } = useInbox();
+  // Slack n'est pas encore lu côté backend : seul Gmail alimente l'inbox pour l'instant.
+  const all = items.map((m) => ({
+    ...m,
+    from: senderName(m.from),
+    time: formatMessageTime(m.date),
+  }));
   const list = tab === "all" ? all : all.filter((m) => m.source === tab);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = list.find((m) => m.id === selectedId);
@@ -50,10 +52,22 @@ function InboxPage() {
         ))}
       </div>
 
-      {list.length === 0 ? (
+      {loading ? (
+        <div className="rounded-2xl border bg-card p-10 text-center text-sm text-muted-foreground">Chargement de tes messages…</div>
+      ) : error ? (
+        <div className="rounded-2xl border border-destructive/40 bg-card p-6 text-sm text-destructive">{error.message}</div>
+      ) : list.length === 0 ? (
         <div className="rounded-2xl border border-dashed bg-card p-10 text-center">
-          <p className="font-medium">Aucune source connectée ici.</p>
-          <Link to="/connexions" className="mt-2 inline-block text-sm underline">Connecter Gmail ou Slack</Link>
+          <p className="font-medium">
+            {tab === "slack"
+              ? "La lecture de Slack arrive bientôt."
+              : connected
+                ? "Ta boîte de réception est vide."
+                : "Aucune source connectée ici."}
+          </p>
+          {!connected && (
+            <Link to="/connexions" className="mt-2 inline-block text-sm underline">Connecter Gmail</Link>
+          )}
         </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
@@ -89,7 +103,7 @@ function InboxPage() {
                 </span>
                 <h2 className="mt-3 font-display text-xl font-semibold">{selected.subject}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">{selected.from} · {selected.time}</p>
-                <p className="mt-6 leading-relaxed">{selected.preview}</p>
+                <p className="mt-6 whitespace-pre-wrap break-words leading-relaxed">{selected.body || selected.preview}</p>
                 <div className="mt-6 rounded-xl bg-muted p-4">
                   <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     <Sparkle className="size-3.5" /> Suggestion de Luce
