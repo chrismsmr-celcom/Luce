@@ -74,6 +74,20 @@ export type RealFile = {
   link: string;
 };
 
+export type RealArtifact = {
+  id: string;
+  kind: "reply" | "action" | "summary" | "reminder" | "alert";
+  title: string;
+  body: string;
+  sources: string[];
+  urgency: "high" | "normal" | "low";
+  hasAction: boolean;
+  actionTool: string | null;
+  status: "new" | "processing" | "done";
+  note: string | null;
+  created: string;
+};
+
 export const api = {
   me: () => request<Me>("/api/me"),
   connections: () => request<Record<string, boolean>>("/api/connections"),
@@ -103,4 +117,17 @@ export const api = {
   agenda: () =>
     request<{ items: RealEvent[] }>(`/api/data/agenda?tz=${new Date().getTimezoneOffset()}`),
   files: () => request<{ items: RealFile[] }>("/api/data/files"),
+  artifacts: () => request<{ items: RealArtifact[] }>("/api/artifacts"),
+  generateArtifacts: () =>
+    request<{ created: number; connected: string[]; note: string | null; items: RealArtifact[] }>(
+      "/api/artifacts/generate",
+      { method: "POST" },
+    ),
+  approveArtifact: (id: string) =>
+    request<{ success: boolean; pending_approval: boolean; blocked: boolean; error?: string }>(
+      `/api/artifacts/${id}/approve`,
+      { method: "POST" },
+    ),
+  dismissArtifact: (id: string) =>
+    request<{ success: boolean }>(`/api/artifacts/${id}/dismiss`, { method: "POST" }),
 };
