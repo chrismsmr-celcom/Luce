@@ -51,6 +51,29 @@ export type ChatResult = {
 
 export type Me = { toolkits: string[]; autonomy: Autonomy; pending_actions: PendingAction[] };
 
+
+export type RealMessage = {
+  id: string;
+  source: "gmail" | "slack";
+  from: string;
+  subject: string;
+  preview: string;
+  body?: string;
+  date: string;
+  unread: boolean;
+  priority: boolean;
+};
+export type RealEvent = { id: string; title: string; start: string; end: string; allDay: boolean; who: string };
+export type RealFile = {
+  id: string;
+  name: string;
+  type: "pdf" | "doc" | "sheet" | "slides" | "image" | "folder";
+  owner: string;
+  modified: string;
+  size: number | null;
+  link: string;
+};
+
 export const api = {
   me: () => request<Me>("/api/me"),
   connections: () => request<Record<string, boolean>>("/api/connections"),
@@ -76,5 +99,8 @@ export const api = {
   rejectAction: (id: string) =>
     request<{ success: boolean }>(`/api/actions/${id}/reject`, { method: "POST" }),
   deleteAccount: () => request<{ success: boolean }>("/api/account/delete", { method: "POST" }),
+  inbox: () => request<{ items: RealMessage[] }>("/api/data/inbox"),
+  agenda: () =>
+    request<{ items: RealEvent[] }>(`/api/data/agenda?tz=${new Date().getTimezoneOffset()}`),
+  files: () => request<{ items: RealFile[] }>("/api/data/files"),
 };
-
