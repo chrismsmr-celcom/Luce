@@ -2,7 +2,7 @@
 
 Branchement dans app.py (après data.register(...)) :
 
-    import mail  # noqa: E402
+    from src.lib import mail  # noqa: E402
     mail.register(app, get_user_id, server_error)
 
 Routes (authentifiées comme le reste de /api) :
@@ -34,19 +34,12 @@ MAX_BYTES = int(os.getenv("LUCE_ATTACHMENT_MAX_BYTES", str(4_000_000)))
 MAX_HTML = 1_500_000
 MAX_TEXT = 300_000
 
-# Types servis tels quels (le navigateur peut les afficher). Tout le reste est servi en
-# application/octet-stream : jamais de HTML / JS servi depuis nos routes.
 INLINE_MIME = {
     "image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "image/avif", "image/bmp",
     "image/svg+xml", "application/pdf", "video/mp4", "video/webm", "video/quicktime",
     "audio/mpeg", "audio/mp3", "audio/wav", "audio/ogg", "audio/mp4", "audio/webm",
     "text/plain", "text/csv",
 }
-
-
-# ---------------------------------------------------------------------------
-# Parsing d'un message
-# ---------------------------------------------------------------------------
 
 def _b64(value: str) -> bytes:
     value = value.strip().replace("\n", "")
@@ -56,9 +49,7 @@ def _b64(value: str) -> bytes:
     except Exception:  # noqa: BLE001
         return base64.b64decode(value)
 
-
 def _find_message(node):
-    """Premier dict qui ressemble à un message Gmail."""
     if isinstance(node, dict):
         if any(k in node for k in ("payload", "messageText", "messageId")):
             return node
@@ -73,13 +64,11 @@ def _find_message(node):
                 return found
     return None
 
-
 def _walk(part, out):
     if isinstance(part, dict):
         out.append(part)
         for sub in part.get("parts") or []:
             _walk(sub, out)
-
 
 def _headers(payload) -> dict:
     result = {}
@@ -87,7 +76,6 @@ def _headers(payload) -> dict:
         if isinstance(h, dict) and h.get("name"):
             result.setdefault(str(h["name"]).lower(), str(h.get("value") or ""))
     return result
-
 
 def parse_message(data) -> dict:
     msg = _find_message(data) or {}
@@ -126,7 +114,6 @@ def parse_message(data) -> dict:
             elif mime == "text/plain" and not text:
                 text = chunk
 
-    # Format simplifié de Composio (attachmentList) : complète ce que le payload n'a pas donné.
     for a in msg.get("attachmentList") or msg.get("attachments") or []:
         if not isinstance(a, dict):
             continue
@@ -148,8 +135,10 @@ def parse_message(data) -> dict:
     def clean_size(s):
         return int(s) if str(s or "").isdigit() else None
 
+    msg_id = _text(msg.get("messageId") or msg.get("id"))
+
     return {
-        "id": _text(msg.get("messageId") or msg.get("id")),
+        "id": msg_id,
         "from": _text(hdr.get("from") or msg.get("sender") or msg.get("from")),
         "to": _text(hdr.get("to") or msg.get("to")),
         "cc": _text(hdr.get("cc") or msg.get("cc")),
@@ -157,20 +146,18 @@ def parse_message(data) -> dict:
         "date": _text(msg.get("messageTimestamp") or msg.get("date") or hdr.get("date")),
         "html": html[:MAX_HTML],
         "text": text[:MAX_TEXT],
-        "attachments": [{**a, "size": clean_size(a["size"])} for a in attachments.values()],
+        # MODIFICATION ESSENTIELLE : Ajout de l'URL pour que le frontend puisse télécharger/afficher
+        "attachments": [{
+            **a, 
+            "size": clean_size(a["size"]),
+            "url": f"/api/data/mail/{msg_id}/attachment?aid={a['id']}&name={urllib.parse.quote(a['filename'])}&mime={urllib.parse.quote(a['mimeType'])}"
+        } for a in attachments.values()],
     }
-
-
-# ---------------------------------------------------------------------------
-# Pièce jointe : extraction des octets
-# ---------------------------------------------------------------------------
 
 _B64_KEYS = ("data", "file_data", "content", "base64", "attachmentData", "attachment_data", "body")
 _URL_KEYS = ("s3url", "s3_url", "url", "download_url", "downloadUrl", "signed_url", "link")
 
-
 def _find_payload(node, depth=0):
-    """Retourne ("b64", str) ou ("url", str) en explorant la réponse."""
     if depth > 6:
         return None
     if isinstance(node, dict):
@@ -193,14 +180,11 @@ def _find_payload(node, depth=0):
                 return found
     return None
 
-
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, *a, **k):  # noqa: D401
         return None
 
-
 def _is_public_https(url: str) -> bool:
-    """Garde-fou SSRF : https uniquement, et le nom d'hôte ne doit résoudre que vers des IP publiques."""
     parts = urllib.parse.urlparse(url)
     if parts.scheme != "https" or not parts.hostname:
         return False
@@ -214,24 +198,17 @@ def _is_public_https(url: str) -> bool:
             return False
     return True
 
-
 def _download(url: str):
-    """Télécharge au plus MAX_BYTES + 1 octets. Retourne (bytes, too_large)."""
     if not _is_public_https(url):
         raise ValueError("URL de téléchargement refusée")
     opener = urllib.request.build_opener(_NoRedirect)
     req = urllib.request.Request(url, headers={"User-Agent": "luce/1.0"})
-    with opener.open(req, timeout=20) as resp:  # noqa: S310 (https + IP publique vérifiés)
+    with opener.open(req, timeout=20) as resp:  # noqa: S310
         declared = int(resp.headers.get("Content-Length") or 0)
         if declared > MAX_BYTES:
             return b"", True
         content = resp.read(MAX_BYTES + 1)
     return content[:MAX_BYTES], len(content) > MAX_BYTES
-
-
-# ---------------------------------------------------------------------------
-# Routes
-# ---------------------------------------------------------------------------
 
 def register(app, get_user_id, server_error):
     @app.get("/api/data/mail/<message_id>")
@@ -280,7 +257,6 @@ def register(app, get_user_id, server_error):
                 try:
                     content, too_large = _download(value)
                 except ValueError:
-                    # URL refusée par le garde-fou SSRF : on ne la renvoie pas au navigateur.
                     logger.warning("URL de pièce jointe refusée (non publique ou non https)")
                     return jsonify({"error": "Pièce jointe indisponible"}), 502
                 except (urllib.error.URLError, OSError) as exc:
