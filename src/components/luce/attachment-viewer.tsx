@@ -17,7 +17,7 @@ const BY_EXT: Record<string, string> = {
 
 // Gmail annonce parfois application/octet-stream : on retombe sur l'extension du fichier.
 export function effectiveMime(a: Pick<MailAttachment, "mimeType" | "filename">): string {
-  const m = (a.mimeType || "").toLowerCase().split(";")[0].trim();
+  const m = ((a.mimeType || "").toLowerCase().split(";")[0] ?? "").trim();
   if (m && m !== "application/octet-stream") return m;
   const ext = a.filename.split(".").pop()?.toLowerCase() ?? "";
   return BY_EXT[ext] ?? m ?? "application/octet-stream";
@@ -36,7 +36,7 @@ type State =
   | { status: "loading" }
   | { status: "error"; message: string }
   | { status: "external"; url: string }
-  | { status: "ready"; url: string; text?: string };
+  | { status: "ready"; url: string; text?: string | undefined };
 
 export function AttachmentViewer({
   messageId,
