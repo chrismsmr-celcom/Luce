@@ -30,7 +30,10 @@ const TABS = [
 // "Amina Kalala <amina@x.com>" -> { name: "Amina Kalala", email: "amina@x.com" }
 function splitSender(from: string): { name: string; email: string } {
   const m = from.match(/^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/);
-  if (m) return { name: m[1].trim() || m[2], email: m[2] };
+  if (m) {
+    const email = m[2] ?? "";
+    return { name: (m[1] ?? "").trim() || email, email };
+  }
   return { name: from.trim(), email: from.includes("@") ? from.trim() : "" };
 }
 
