@@ -51,13 +51,6 @@ export type ChatResult = {
 
 export type Me = { toolkits: string[]; autonomy: Autonomy; pending_actions: PendingAction[] };
 
-export type Attachment = {
-  id: string;
-  filename: string;
-  mimeType: string;
-  size: number | null;
-  url?: string;
-};
 
 export type RealMessage = {
   id: string;
@@ -66,13 +59,11 @@ export type RealMessage = {
   subject: string;
   preview: string;
   body?: string;
-  html?: string;
   date: string;
   unread: boolean;
   priority: boolean;
-  attachments?: Attachment[];
+  hasAttachments?: boolean;
 };
-
 export type RealEvent = { id: string; title: string; start: string; end: string; allDay: boolean; who: string };
 export type RealFile = {
   id: string;
@@ -97,6 +88,54 @@ export type RealArtifact = {
   note: string | null;
   created: string;
 };
+
+export type MailAttachment = {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number | null;
+  contentId?: string;
+  inline?: boolean;
+};
+
+export type MailDetail = {
+  id: string;
+  from: string;
+  to: string;
+  cc: string;
+  subject: string;
+  date: string;
+  html: string;
+  text: string;
+  attachments: MailAttachment[];
+};
+
+export type AttachmentResult = { blob: Blob } | { url: string };
+
+// Les pièces jointes ne peuvent pas être de simples <a href> : le navigateur n'enverrait pas le
+// jeton Authorization. On les télécharge donc avec fetch, puis on les affiche via un blob local.
+async function fetchBlob(path: string): Promise<AttachmentResult> {
+  const token = await getAccessToken();
+  const headers = new Headers();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}${path}`, { headers, credentials: "include" });
+  } catch {
+    throw new ApiError("Impossible de joindre le serveur Luce.", 0);
+  }
+  if (res.status === 401 && token) void signOut();
+  if (res.status === 413) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string; url?: string };
+    if (data.url) return { url: data.url }; // trop gros pour passer par Vercel : lien direct temporaire
+    throw new ApiError(data.error ?? "Fichier trop volumineux", 413);
+  }
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new ApiError(data.error ?? `Erreur ${res.status}`, res.status);
+  }
+  return { blob: await res.blob() };
+}
 
 export const api = {
   me: () => request<Me>("/api/me"),
@@ -140,4 +179,10 @@ export const api = {
     ),
   dismissArtifact: (id: string) =>
     request<{ success: boolean }>(`/api/artifacts/${id}/dismiss`, { method: "POST" }),
+  mailDetail: (id: string) => request<MailDetail>(`/api/data/mail/${encodeURIComponent(id)}`),
+  attachment: (messageId: string, a: MailAttachment) =>
+    fetchBlob(
+      `/api/data/mail/${encodeURIComponent(messageId)}/attachment?` +
+        new URLSearchParams({ aid: a.id, name: a.filename, mime: a.mimeType }).toString(),
+    ),
 };
