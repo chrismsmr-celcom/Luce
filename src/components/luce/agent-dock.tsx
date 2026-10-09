@@ -24,8 +24,8 @@ export function AgentDock() {
     setOpen(true);
     steps.forEach((_, i) =>
       setTimeout(() => {
-        setRuns((r) =>
-          r.map((run) =>
+        setRuns((r): Run[] =>
+          r.map((run): Run =>
             run.id !== id
               ? run
               : {
