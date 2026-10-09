@@ -1,60 +1,67 @@
-# Luce — AI Chief of Staff
+# Luce — frontend
 
-Luce reads and acts on your connected apps (Gmail, Calendar, Drive, Slack, GitHub…) through
-[Composio](https://composio.dev), with every external action passing through the Cerbere/AgentGuard
-security layer.
+Interface web de **Luce**, l'assistant qui lit tes outils et **prépare le travail avant que tu le demandes**.
+Stack : TanStack Start + React 19, Tailwind, shadcn/ui, TanStack Query, Supabase Auth.
 
-- **Backend** (`app.py`, `agent.py`, …): Flask JSON API + agent loop (DeepSeek → OpenRouter → Cerebras).
-- **Frontend** (`src/`): TanStack Start + React, built with [Lovable](https://lovable.dev).
+> Backend : [luce-backend](https://github.com/chrismsmr-celcom/luce-backend) (Flask + Composio + Cerbère).
 
-## Run locally
+## Écrans
 
-```sh
-cp .env.example .env            # fill in the keys
-python -m venv .venv && . .venv/bin/activate
-pip install -r requirements-dev.txt
-python app.py                   # API on http://127.0.0.1:10000
+| Route | Contenu |
+|---|---|
+| `/login` | Connexion par e-mail (Supabase) |
+| `/` | **Aujourd'hui** : priorités Gmail, agenda du jour, propositions à valider |
+| `/inbox` | Mails Gmail : rendu façon Gmail (HTML nettoyé, images bloquées par défaut), pièces jointes (PDF, images, vidéos, audio, texte) |
+| `/artefacts` | Réponses, résumés, rappels et alertes préparés par Luce — « Valider » crée le brouillon Gmail |
+| `/dossiers` | Fichiers Google Drive récents |
+| `/connexions` | Connexion des outils (OAuth Composio) |
+| `/notebook` | Notes locales au navigateur |
+| `/parametres` | Niveau d'autonomie, compte |
 
-# another terminal
-bun install                     # or npm install
-bun run dev                     # Vite proxies /api to Flask
-```
-
-## How the pieces talk
-
-| Frontend | Backend |
-| --- | --- |
-| Command bar | `POST /api/chat` |
-| Connexions page | `GET /api/connections`, `POST /api/connect/<toolkit>` (OAuth redirect → `/api/composio/callback`) |
-| Paramètres → autonomy | `POST /api/settings` |
-| Proposed actions (Confirmer / Refuser) | `POST /api/actions/<id>/confirm`, `/reject` |
-| Delete my data | `POST /api/account/delete` |
-
-All `POST /api/*` requests must send `X-Luce-Client: web` (CSRF guard); `src/lib/api.ts` does it.
-
-### Autonomy is enforced server-side
-
-- `ask`: any modifying tool call is queued; nothing runs until the user clicks **Confirmer**.
-- `draft`: only draft-creation tools run; sending/publishing/deleting is queued.
-- `auto`: Luce acts directly (Cerbere can still block or require approval).
-
-Tools are classified by their Composio slug (`GMAIL_SEND_EMAIL` → write). Unknown verbs count as writes.
-
-## Production
+## Démarrage
 
 ```sh
-LUCE_ENV=production gunicorn -w 2 -b 0.0.0.0:$PORT app:app
+bun install            # ou npm install
+bun run dev            # serveur de développement Vite
+bun run build
+bun run test
 ```
 
-- Serve the frontend and `/api` behind **one domain** (reverse proxy) — simplest and safest for cookies.
-  Otherwise set `FRONTEND_ORIGINS` and `VITE_API_URL`.
-- Put `LUCE_DB_PATH` on a persistent disk (the default file is lost on ephemeral hosts).
-- The in-memory rate limiter is per worker; use Redis if you scale out.
-- Identity is still an anonymous browser session. Add real sign-in before opening to the public.
+Crée un fichier `.env` :
 
-## Tests
-
-```sh
-pytest            # backend
-bun run test      # frontend
 ```
+VITE_SUPABASE_URL=https://xxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=...
+VITE_API_URL=https://luce-backend.vercel.app   # URL du backend, sans slash final
+```
+
+En production (Vercel), ces variables doivent être définies pour **Production** puis le projet **redéployé** :
+les variables `VITE_*` sont figées au moment du build. Sans les variables Supabase, l'app passe en « mode
+local » et ne demande pas de connexion.
+
+## Organisation
+
+```
+src/
+├── routes/                 pages (TanStack Router, fichiers = routes)
+├── components/luce/        app-shell, mail-body (rendu mail), attachment-viewer (aperçu des pièces jointes)
+├── components/ui/          composants shadcn/ui
+├── lib/
+│   ├── api.ts              client du backend (jeton Supabase, blobs de pièces jointes)
+│   ├── auth.ts, supabase.ts
+│   ├── luce-data.ts        hooks de données réelles (inbox, agenda, fichiers) + formatage
+│   └── luce-store.ts       état local (connexions, réglages, notes)
+└── test/                   tests Vitest
+```
+
+## Sécurité côté interface
+
+- Le HTML des mails est nettoyé (**DOMPurify**) puis affiché dans une iframe **sans script**, avec une CSP qui
+  bloque tout contenu distant tant que tu n'as pas cliqué sur « Afficher ».
+- Les pièces jointes sont téléchargées avec le jeton (pas de lien public) et affichées depuis un blob local.
+- Les actions préparées par Luce ne partent jamais sans ton clic.
+
+## Déploiement
+
+Projet Vercel pointant sur ce dépôt. Vérifie que le backend autorise ton domaine (`FRONTEND_ORIGINS`) :
+`https://<backend>/api/health` doit lister `cors_origins`.
