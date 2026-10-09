@@ -81,10 +81,12 @@ function Today() {
           ))}
         </Card>
       </div>
+
+      <ToolsCarousel />
     </div>
   );
 }
-<ToolsCarousel />
+
 function Card({ title, icon: Icon, to, children, className = "" }: { title: string; icon: typeof Inbox; to?: string; children: React.ReactNode; className?: string }) {
   return (
     <section className={`rounded-2xl border bg-card p-4 shadow-soft sm:p-5 ${className}`}>
