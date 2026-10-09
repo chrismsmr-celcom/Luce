@@ -1,11 +1,9 @@
-import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
   createRootRouteWithContext,
-  useNavigate,
   useRouter,
-  useRouterState,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
@@ -14,7 +12,6 @@ import { useEffect, type ReactNode } from "react";
 
 import { AppShell } from "@/components/luce/app-shell";
 import appCss from "../styles.css?url";
-import { useAuth } from "../lib/auth";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -125,37 +122,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthGate />
+      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+      <AppShell>
+        <Outlet />
+      </AppShell>
     </QueryClientProvider>
   );
 }
-
-// /login is public and has its own layout; everything else needs a session
-// (when Supabase is configured) and renders inside the app shell.
-function AuthGate() {
-  const path = useRouterState({ select: (r) => r.location.pathname });
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { status } = useAuth();
-  const onLogin = path === "/login";
-
-  useEffect(() => {
-    if (status === "out") {
-      queryClient.clear(); // never keep the previous user's data around
-      if (!onLogin) navigate({ to: "/login", replace: true });
-    } else if (status === "in" && onLogin) {
-      navigate({ to: "/", replace: true });
-    }
-  }, [status, onLogin, navigate, queryClient]);
-
-  if (onLogin) return <Outlet />;
-  if (status !== "in") return <div className="min-h-screen bg-background" />;
-
-  return (
-    <AppShell>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-    </AppShell>
-  );
-}
-

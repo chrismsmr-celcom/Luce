@@ -2,7 +2,6 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import {
   LayoutGrid,
-  LogOut,
   Inbox,
   FolderOpen,
   Layers,
@@ -28,8 +27,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { AgentDock } from "./agent-dock";
-import { signOut } from "@/lib/auth";
-import { AUTH_ENABLED } from "@/lib/supabase";
 
 const WORK = [
   { title: "Aujourd'hui", url: "/", icon: LayoutGrid },
@@ -99,16 +96,6 @@ function LuceSidebar() {
         <NavGroup label="Système" items={SYSTEM} />
       </SidebarContent>
       <SidebarFooter>
-        {AUTH_ENABLED && (
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Se déconnecter" className="h-10" onClick={() => void signOut()}>
-                <LogOut className="size-4" />
-                <span>Se déconnecter</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        )}
         <div className="flex items-center gap-2 rounded-lg bg-muted p-2 text-xs text-muted-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1.5">
           <ShieldCheck className="size-4 shrink-0 text-success" />
           <span className="truncate group-data-[collapsible=icon]:hidden">Protégé par Cerbère</span>
@@ -153,4 +140,3 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
     </div>
   );
 }
-

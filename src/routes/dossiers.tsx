@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { FileImage, FileSpreadsheet, FileText, Folder, Presentation, Search } from "lucide-react";
 import { PageHeader } from "@/components/luce/app-shell";
-import { formatFileDate, formatSize, useFiles } from "@/lib/luce-data";
+import { FILES, FOLDERS } from "@/lib/luce-demo";
+import { useConnections } from "@/lib/luce-store";
 
 export const Route = createFileRoute("/dossiers")({
   head: () => ({
@@ -16,24 +17,15 @@ export const Route = createFileRoute("/dossiers")({
   component: Dossiers,
 });
 
-const ICONS = { pdf: FileText, doc: FileText, sheet: FileSpreadsheet, slides: Presentation, image: FileImage, folder: Folder };
-
-const KINDS = [
-  { id: "doc", label: "Documents" },
-  { id: "sheet", label: "Feuilles" },
-  { id: "slides", label: "Présentations" },
-  { id: "pdf", label: "PDF" },
-  { id: "image", label: "Images" },
-  { id: "folder", label: "Dossiers" },
-] as const;
+const ICONS = { pdf: FileText, doc: FileText, sheet: FileSpreadsheet, slides: Presentation, image: FileImage };
 
 function Dossiers() {
-  const { connected, items, loading, error } = useFiles();
+  const [connections] = useConnections();
   const [folder, setFolder] = useState<string | null>(null);
   const [q, setQ] = useState("");
-  const files = items.filter((f) => (!folder || f.type === folder) && f.name.toLowerCase().includes(q.toLowerCase()));
+  const files = FILES.filter((f) => (!folder || f.folder === folder) && f.name.toLowerCase().includes(q.toLowerCase()));
 
-  if (!connected)
+  if (!connections.includes("googledrive"))
     return (
       <div className="mx-auto max-w-6xl">
         <PageHeader title="Dossiers" />
@@ -52,34 +44,32 @@ function Dossiers() {
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher un fichier…" className="min-w-0 flex-1 bg-transparent py-2.5 text-sm outline-none" />
       </div>
       <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
-        {[null, ...KINDS.map((k) => k.id)].map((f) => (
+        {[null, ...FOLDERS].map((f) => (
           <button
             key={f ?? "all"}
             onClick={() => setFolder(f)}
             className={`flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2 text-sm ${folder === f ? "border-transparent bg-secondary text-secondary-foreground" : "bg-card"}`}
           >
-            <Folder className="size-4" /> {f ? KINDS.find((k) => k.id === f)?.label : "Tous"}
+            <Folder className="size-4" /> {f ?? "Tous"}
           </button>
         ))}
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {files.map((f) => {
-          const Icon = ICONS[f.type] ?? FileText;
+          const Icon = ICONS[f.type as keyof typeof ICONS];
           return (
-            <a key={f.id} href={f.link || undefined} target="_blank" rel="noreferrer" className="group flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-soft transition hover:-translate-y-0.5">
+            <div key={f.id} className="group flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-soft transition hover:-translate-y-0.5">
               <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
                 <Icon className="size-5" />
               </div>
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{f.name}</p>
-                <p className="truncate text-xs text-muted-foreground">{[f.owner, formatFileDate(f.modified), formatSize(f.size)].filter(Boolean).join(" · ")}</p>
+                <p className="truncate text-xs text-muted-foreground">{f.owner} · {f.modified} · {f.size}</p>
               </div>
-            </a>
+            </div>
           );
         })}
-        {loading && <p className="text-sm text-muted-foreground">Chargement de ton Drive…</p>}
-        {error && <p className="text-sm text-destructive">{error.message}</p>}
-        {!loading && !error && files.length === 0 && <p className="text-sm text-muted-foreground">Aucun fichier trouvé.</p>}
+        {files.length === 0 && <p className="text-sm text-muted-foreground">Aucun fichier trouvé.</p>}
       </div>
     </div>
   );

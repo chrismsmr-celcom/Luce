@@ -14,11 +14,4 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
-
-  it("matches /login so the sign-in page is reachable", () => {
-    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
-
-    expect(router.matchRoutes("/login").at(-1)?.routeId).toBe("/login");
-  });
 });
-

@@ -14,7 +14,6 @@ import { Route as ArtefactsRouteImport } from './routes/artefacts'
 import { Route as ConnexionsRouteImport } from './routes/connexions'
 import { Route as DossiersRouteImport } from './routes/dossiers'
 import { Route as InboxRouteImport } from './routes/inbox'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotebookRouteImport } from './routes/notebook'
 import { Route as ParametresRouteImport } from './routes/parametres'
 
@@ -43,11 +42,6 @@ const InboxRoute = InboxRouteImport.update({
   path: '/inbox',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const NotebookRoute = NotebookRouteImport.update({
   id: '/notebook',
   path: '/notebook',
@@ -65,7 +59,6 @@ export interface FileRoutesByFullPath {
   '/connexions': typeof ConnexionsRoute
   '/dossiers': typeof DossiersRoute
   '/inbox': typeof InboxRoute
-  '/login': typeof LoginRoute
   '/notebook': typeof NotebookRoute
   '/parametres': typeof ParametresRoute
 }
@@ -75,7 +68,6 @@ export interface FileRoutesByTo {
   '/connexions': typeof ConnexionsRoute
   '/dossiers': typeof DossiersRoute
   '/inbox': typeof InboxRoute
-  '/login': typeof LoginRoute
   '/notebook': typeof NotebookRoute
   '/parametres': typeof ParametresRoute
 }
@@ -86,7 +78,6 @@ export interface FileRoutesById {
   '/connexions': typeof ConnexionsRoute
   '/dossiers': typeof DossiersRoute
   '/inbox': typeof InboxRoute
-  '/login': typeof LoginRoute
   '/notebook': typeof NotebookRoute
   '/parametres': typeof ParametresRoute
 }
@@ -98,7 +89,6 @@ export interface FileRouteTypes {
     | '/connexions'
     | '/dossiers'
     | '/inbox'
-    | '/login'
     | '/notebook'
     | '/parametres'
   fileRoutesByTo: FileRoutesByTo
@@ -108,7 +98,6 @@ export interface FileRouteTypes {
     | '/connexions'
     | '/dossiers'
     | '/inbox'
-    | '/login'
     | '/notebook'
     | '/parametres'
   id:
@@ -118,7 +107,6 @@ export interface FileRouteTypes {
     | '/connexions'
     | '/dossiers'
     | '/inbox'
-    | '/login'
     | '/notebook'
     | '/parametres'
   fileRoutesById: FileRoutesById
@@ -129,7 +117,6 @@ export interface RootRouteChildren {
   ConnexionsRoute: typeof ConnexionsRoute
   DossiersRoute: typeof DossiersRoute
   InboxRoute: typeof InboxRoute
-  LoginRoute: typeof LoginRoute
   NotebookRoute: typeof NotebookRoute
   ParametresRoute: typeof ParametresRoute
 }
@@ -171,13 +158,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InboxRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/notebook': {
       id: '/notebook'
       path: '/notebook'
@@ -201,7 +181,6 @@ const rootRouteChildren: RootRouteChildren = {
   ConnexionsRoute: ConnexionsRoute,
   DossiersRoute: DossiersRoute,
   InboxRoute: InboxRoute,
-  LoginRoute: LoginRoute,
   NotebookRoute: NotebookRoute,
   ParametresRoute: ParametresRoute,
 }
@@ -218,4 +197,3 @@ declare module '@tanstack/react-start' {
     config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }
-

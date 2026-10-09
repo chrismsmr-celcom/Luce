@@ -60,9 +60,6 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-success: var(--success);
-  --color-brand-red: var(--brand-red);
-  --color-brand-yellow: var(--brand-yellow);
-  --color-brand-cream: var(--brand-cream);
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --shadow-soft: var(--shadow-soft);
@@ -70,9 +67,6 @@
 
 :root {
   --radius: 0.875rem;
-  --brand-red: oklch(0.608 0.232 17.7);
-  --brand-yellow: oklch(0.893 0.137 95.7);
-  --brand-cream: oklch(0.929 0.04 96.2);
   --background: oklch(0.97 0.002 90);
   --foreground: oklch(0.17 0 0);
   --card: oklch(1 0 0);
@@ -155,14 +149,3 @@
     color: var(--color-foreground);
   }
 }
-
-/* Login: the zipper pull drops once on load. */
-@keyframes zip-drop {
-  from { transform: translateY(-700px); }
-  to { transform: none; }
-}
-.zip-pull { animation: zip-drop 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-@media (prefers-reduced-motion: reduce) {
-  .zip-pull { animation: none; }
-}
-
