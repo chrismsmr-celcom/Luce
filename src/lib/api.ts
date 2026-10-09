@@ -51,7 +51,6 @@ export type ChatResult = {
 
 export type Me = { toolkits: string[]; autonomy: Autonomy; pending_actions: PendingAction[] };
 
-
 export type RealMessage = {
   id: string;
   source: "gmail" | "slack";
@@ -112,6 +111,16 @@ export type MailDetail = {
 
 export type AttachmentResult = { blob: Blob } | { url: string };
 
+// Snapshot d'un outil connecté, pour le carrousel générique (tools-carousel.tsx).
+// Vient de GET /api/data/snapshots (backend data_snapshots.py).
+export type ToolSnapshot = {
+  id: string;          // slug toolkit Composio, ex. "googledrive"
+  name: string;        // nom affiché, ex. "Google Drive"
+  headline: string;   // ex. "4 éléments récents"
+  items: { label: string; detail?: string }[];
+  to?: string;        // route dédiée éventuelle, sinon /connexions
+};
+
 // Les pièces jointes ne peuvent pas être de simples <a href> : le navigateur n'enverrait pas le
 // jeton Authorization. On les télécharge donc avec fetch, puis on les affiche via un blob local.
 async function fetchBlob(path: string): Promise<AttachmentResult> {
@@ -166,6 +175,7 @@ export const api = {
   agenda: () =>
     request<{ items: RealEvent[] }>(`/api/data/agenda?tz=${new Date().getTimezoneOffset()}`),
   files: () => request<{ items: RealFile[] }>("/api/data/files"),
+  toolSnapshots: () => request<ToolSnapshot[]>("/api/data/snapshots"),
   artifacts: () => request<{ items: RealArtifact[] }>("/api/artifacts"),
   generateArtifacts: () =>
     request<{ created: number; connected: string[]; note: string | null; items: RealArtifact[] }>(
