@@ -180,7 +180,9 @@ function Artefacts() {
               )}
               {open.hasAction && open.status !== "done" && (
                 <p className="mt-3 text-xs text-muted-foreground">
-                  Au clic sur « Valider », Luce exécute l'action préparée ({open.actionTool}). Rien n'est envoyé avant.
+                  {open.actionTool?.includes("DRAFT")
+                    ? "« Valider » crée ce brouillon dans ton Gmail (dossier Brouillons). Rien n'est envoyé : tu relis et tu envoies toi-même."
+                    : `« Valider » exécute l'action préparée (${open.actionTool}). Rien ne part avant ton clic.`}
                 </p>
               )}
               {open.note && <p className="mt-3 text-xs text-muted-foreground">{open.note}</p>}
@@ -188,7 +190,7 @@ function Artefacts() {
                 {open.status !== "done" && (
                   <Button onClick={() => approve.mutate(open.id)} disabled={approve.isPending}>
                     {approve.isPending ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
-                    {open.hasAction ? "Valider" : "Marquer comme fait"}
+                    {open.hasAction ? (open.actionTool?.includes("DRAFT") ? "Créer le brouillon Gmail" : "Valider") : "Marquer comme fait"}
                   </Button>
                 )}
                 <Button variant="outline" onClick={() => { void navigator.clipboard.writeText(open.body); toast("Copié"); }}>
