@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { formatEventTime, formatMessageTime, senderName, useAgenda, useInbox } from "@/lib/luce-data";
 import { useSettings } from "@/lib/luce-store";
+import { ToolsCarousel } from "@/components/luce/tools-carousel";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -30,7 +31,7 @@ function Today() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <PageHeader title={`${hello}, ${settings.name}`} subtitle="Voici ce que Luce a préparé pour toi." />
+      <PageHeader title={`${hello}, ${settings.name}`} subtitle="Voici ce que Luce a préparé pourCardstoi." />
 
       <div className="mb-6 overflow-hidden rounded-3xl bg-secondary p-5 text-secondary-foreground sm:p-7">
         <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-primary">
@@ -83,7 +84,7 @@ function Today() {
     </div>
   );
 }
-
+<ToolsCarousel />
 function Card({ title, icon: Icon, to, children, className = "" }: { title: string; icon: typeof Inbox; to?: string; children: React.ReactNode; className?: string }) {
   return (
     <section className={`rounded-2xl border bg-card p-4 shadow-soft sm:p-5 ${className}`}>
