@@ -4,48 +4,12 @@ import { ArrowUpRight, Plug } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
-// ---------------------------------------------------------------------------
-// Version 2 — le composant ne connaît AUCUN outil en dur.
-// Tout vient d'un seul endpoint backend : GET /api/data/snapshots
-// qui renvoie { tools: ToolSnapshot[] } pour chaque outil connecté
-// (hors messagerie / agenda, exclus côté backend).
-//
-// Types partagés — à mettre dans src/lib/api.ts (ou un types.ts).
-// ---------------------------------------------------------------------------
-
-export interface ToolSnapshotItem {
-  label: string;   // ex. " Rapport Q3.pdf"
-  detail?: string; // ex. "modifié il y a 2 h"
-}
-
-export interface ToolSnapshot {
-  id: string;      // identifiant toolkit Composio, ex. "googledrive"
-  name: string;    // ex. "Google Drive"
-  headline: string; // ex. "4 éléments récents"
-  items: ToolSnapshotItem[];
-  to?: string;     // route frontend dédiée, sinon /connexions
-}
-
-// ---------------------------------------------------------------------------
-// Dans api.ts, ajouter :
-//
-//   export const api = {
-//     ...,
-//     toolSnapshots: () =>
-//       request<ToolSnapshot[]>("/api/data/snapshots"), // cf. ton helper request()
-//   };
-//
-// Le helper request() ajoute déjà le Bearer token ; on garde aussi le
-// pattern `enabled: !!session` pour éviter la race 401 au chargement.
-// ---------------------------------------------------------------------------
-
 const INTERVAL = 5000;
 
-export function ToolsCarousel({ session }: { session: unknown }) {
-  const { data, isLoading } = useQuery({
+export function ToolsCarousel() {
+  const { data, isLoading, error } = useQuery({
     queryKey: ["data", "tool-snapshots"],
     queryFn: api.toolSnapshots,
-    enabled: !!session, // ne part qu'une fois la session (donc le token) prête
     staleTime: 60_000,
     retry: 1,
   });
@@ -78,7 +42,9 @@ export function ToolsCarousel({ session }: { session: unknown }) {
         <div>
           <Plug className="mx-auto mb-2 size-5 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            Connecte des outils (Drive, GitHub, Notion, CRM…) pour voir leurs données ici.
+            {error
+              ? "Impossible de charger les données des outils — réessaie dans un instant."
+              : "Connecte des outils (Drive, GitHub, Notion, CRM…) pour voir leurs données ici."}
           </p>
           <Link to="/connexions" className="mt-2 inline-block text-sm font-medium underline">
             Ajouter un outil
