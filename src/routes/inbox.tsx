@@ -42,7 +42,7 @@ function Avatar({ name }: { name: string }) {
   for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
   return (
     <span
-      className="grid size-10 shrink-0 place-items-center rounded-full text-sm font-semibold text-white"
+      className="grid size-9 shrink-0 place-items-center rounded-full text-sm font-semibold text-white"
       style={{ backgroundColor: `hsl(${hash} 55% 45%)` }}
     >
       {(name.trim()[0] ?? "?").toUpperCase()}
@@ -135,19 +135,19 @@ function InboxPage() {
             ))}
           </ul>
 
-          <div className={`min-w-0 rounded-2xl border bg-card p-5 shadow-soft sm:p-6 ${selected ? "" : "hidden lg:block"}`}>
+          <div className={`min-w-0 rounded-2xl border bg-card p-4 shadow-soft sm:p-5 lg:sticky lg:top-4 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto ${selected ? "" : "hidden lg:block"}`}>
             {selected && sender ? (
               <>
                 <button onClick={() => setSelectedId(null)} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground lg:hidden">
                   <ArrowLeft className="size-4" /> Retour
                 </button>
 
-                <h2 className="font-display text-xl font-semibold leading-snug">{detail.data?.subject || selected.subject}</h2>
+                <h2 className="font-display text-lg font-semibold leading-snug">{detail.data?.subject || selected.subject}</h2>
                 <span className="mt-2 inline-block rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
                   {selected.source === "slack" ? "Slack" : "Gmail"}
                 </span>
 
-                <div className="mt-5 flex items-start gap-3">
+                <div className="mt-3 flex items-start gap-3">
                   <Avatar name={sender.name} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{sender.name}</p>
@@ -162,7 +162,7 @@ function InboxPage() {
                   </time>
                 </div>
 
-                <div className="mt-5 border-t pt-5">
+                <div className="mt-3 border-t pt-3">
                   {detail.isLoading ? (
                     <div className="space-y-2" aria-busy="true">
                       <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
@@ -184,7 +184,7 @@ function InboxPage() {
                 </div>
 
                 {attachments.length > 0 && (
-                  <div className="mt-6 border-t pt-5">
+                  <div className="mt-4 border-t pt-3">
                     <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold">
                       <Paperclip className="size-4" /> {attachments.length} pièce{attachments.length > 1 ? "s" : ""} jointe{attachments.length > 1 ? "s" : ""}
                     </h3>
@@ -209,7 +209,7 @@ function InboxPage() {
                 )}
 
                 {selected.source === "gmail" && (
-                  <div className="mt-6 flex flex-wrap gap-2">
+                  <div className="mt-4 flex flex-wrap gap-2">
                     <Button asChild variant="outline">
                       <a href={`https://mail.google.com/mail/u/0/#all/${selected.id}`} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="size-4" /> Ouvrir dans Gmail
