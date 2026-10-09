@@ -3,7 +3,7 @@ import { ArrowUp, Check, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Step = { label: string; done: boolean };
-type Run = { id: number; goal: string; steps: Step[]; result?: string };
+type Run = { id: number; goal: string; steps: Step[]; result?: string | undefined };
 
 const SUGGESTIONS = [
   "Résume mes emails non lus",
