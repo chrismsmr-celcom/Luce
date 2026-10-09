@@ -35,3 +35,11 @@ export const AGENDA = [
   { time: "13:00", title: "Déjeuner équipe", who: "Équipe" },
   { time: "15:00", title: "Revue produit Luce", who: "Patrick, Grace" },
 ];
+
+export const TOOL_SNAPSHOTS: Record<string, { headline: string; stats: { label: string; value: string }[]; items: string[] }> = {
+  googledrive: { headline: "6 fichiers modifiés cette semaine", stats: [{ label: "Fichiers", value: "128" }, { label: "Partagés", value: "14" }, { label: "Stockage", value: "62 %" }], items: ["Contrat Celcom 2026.pdf — Amina K.", "Roadmap Luce Q4 — modifié hier"] },
+  github: { headline: "luce-agent · 3 pull requests ouvertes", stats: [{ label: "PR ouvertes", value: "3" }, { label: "Issues", value: "12" }, { label: "Commits / 7j", value: "41" }], items: ["#42 Ajout du connecteur Slack — à relire", "#39 Fix mémoire Notebook — fusionnée"] },
+  twitter: { headline: "Ton compte X cette semaine", stats: [{ label: "Abonnés", value: "2,4k" }, { label: "Impressions", value: "18k" }, { label: "Brouillons", value: "2" }], items: ["Annonce Luce v0.9 — à valider", "Thread IA & productivité — 320 j'aime"] },
+  whatsapp: { headline: "4 conversations actives", stats: [{ label: "Non lus", value: "5" }, { label: "Groupes", value: "3" }, { label: "Envoyés", value: "27" }], items: ["Équipe Celcom — « On valide demain ? »", "Grace — « Merci pour le doc ! »"] },
+  supabase: { headline: "Base de production en bonne santé", stats: [{ label: "Tables", value: "18" }, { label: "Requêtes / h", value: "3,1k" }, { label: "Uptime", value: "99,9 %" }], items: ["Nouveaux utilisateurs aujourd'hui : 23", "Dernière sauvegarde : il y a 2 h"] },
+};

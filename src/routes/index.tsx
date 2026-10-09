@@ -3,6 +3,7 @@ import { ArrowRight, CalendarDays, Inbox, Layers, Sparkle } from "lucide-react";
 import { PageHeader } from "@/components/luce/app-shell";
 import { AGENDA, ARTIFACTS, EMAILS, SLACK } from "@/lib/luce-demo";
 import { useSettings } from "@/lib/luce-store";
+import { ToolsCarousel } from "@/components/luce/tools-carousel";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -68,6 +69,8 @@ function Today() {
           ))}
         </Card>
       </div>
+
+      <ToolsCarousel />
     </div>
   );
 }
