@@ -23,35 +23,46 @@ USE_PG = False
 
 @contextmanager
 def get_db():
-    class DummyConn:
-        def execute(self, query, params=()): pass
-        def fetchone(self): return None
+    class DummyResult:
         def fetchall(self): return []
+        def fetchone(self): return None
+    class DummyConn:
+        def execute(self, query, params=()): return DummyResult()
+        def commit(self): pass
+        def rollback(self): pass
+        def close(self): pass
     yield DummyConn()
 # -------------------------------------------------------------------
 
 def init_db():
     if supabase:
-        logger.info("Base de données initialisée avec Supabase (table: luce_users).")
+        logger.info("Base de données initialisée avec Supabase.")
     else:
         logger.error("Impossible d'initialiser Supabase : variables d'environnement manquantes.")
 
 def create_user(user_id: str):
     if not supabase: return
-    supabase.table("luce_users").upsert(
-        {"id": user_id, "autonomy": "ask"}, 
-        on_conflict="id"
-    ).execute()
+    supabase.table("luce_users").upsert({"id": user_id, "autonomy": "ask"}, on_conflict="id").execute()
 
 def delete_user(user_id: str):
     if not supabase: return
     supabase.table("luce_users").delete().eq("id", user_id).execute()
 
 def get_autonomy(user_id: str) -> str:
-    if not supabase: return "ask"
-    res = supabase.table("luce_users").select("autonomy").eq("id", user_id).single().execute()
-    if res.data and res.data.get("autonomy") in AUTONOMY_LEVELS:
-        return res.data["autonomy"]
+    if not supabase:
+        return "ask"
+    try:
+        res = (
+            supabase.table("luce_users")
+            .select("autonomy")
+            .eq("id", user_id)
+            .limit(1)
+            .execute()
+        )
+        if res.data and res.data[0].get("autonomy") in AUTONOMY_LEVELS:
+            return res.data[0]["autonomy"]
+    except Exception as exc:
+        logger.error("get_autonomy failed (user=%s): %s", user_id, exc)
     return "ask"
 
 def set_autonomy(user_id: str, level: str):
@@ -72,9 +83,14 @@ def save_composio_session_id(user_id: str, session_id: str):
 def save_message(user_id: str, role: str, content: str):
     if not supabase: return
     try:
-        supabase.table("messages").insert({"user_id": user_id, "role": role, "content": content}).execute()
-    except Exception:
-        pass  # Ignore si la table n'existe pas encore
+        supabase.table("messages").insert(
+            {"user_id": user_id, "role": role, "content": content}
+        ).execute()
+    except Exception as exc:
+        # L'historique est un bonus, pas une dépendance critique :
+        # on logge (visible dans Vercel) mais on ne casse pas la requête.
+        logger.error("save_message failed (user=%s role=%s): %s",
+                     user_id, role, exc)
 
 def get_messages(user_id: str, limit: int | None = None):
     if not supabase: return []
@@ -97,17 +113,82 @@ def clear_messages(user_id: str):
         pass
 
 def create_pending_action(user_id: str, tool: str, arguments: dict) -> str:
-    if not supabase: return uuid.uuid4().hex
+    if not supabase: 
+        logger.error("Supabase client is None. Cannot create pending action.")
+        raise RuntimeError("Supabase non configuré")
+    
     action_id = uuid.uuid4().hex
     try:
-        supabase.table("pending_actions").insert({
-            "id": action_id, "user_id": user_id, "tool": tool,
-            "arguments": json.dumps(arguments, default=str), "status": "pending"
+        # L'insertion doit réussir, sinon on lève l'exception pour voir l'erreur dans les logs Vercel
+        res = supabase.table("pending_actions").insert({
+            "id": action_id, 
+            "user_id": user_id, 
+            "tool": tool,
+            "arguments": json.dumps(arguments, default=str), 
+            "status": "pending"
         }).execute()
-    except Exception:
-        pass
-    return action_id
+        logger.info("✅ Pending action %s créée avec succès pour l'utilisateur %s", action_id, user_id)
+        return action_id
+    except Exception as e:
+        logger.error("❌ ÉCHEC CRITIQUE lors de la création de l'action en attente: %s", e)
+        raise  # On ne cache plus l'erreur !
+def save_memory(user_id: str, fact: str, category: str = "other"):
+    """Enregistre un fait durable sur l'utilisateur (sans doublon exact)."""
+    if not supabase:
+        raise RuntimeError("Supabase non configuré")
 
+    fact = (fact or "").strip()
+    if not fact:
+        return
+
+    try:
+        existing = (
+            supabase.table("user_memories")
+            .select("id")
+            .eq("user_id", user_id)
+            .eq("fact", fact)
+            .limit(1)
+            .execute()
+        )
+        if existing.data:
+            return
+
+        supabase.table("user_memories").insert(
+            {"user_id": user_id, "fact": fact, "category": category}
+        ).execute()
+    except Exception as exc:
+        logger.error("save_memory failed (user=%s): %s", user_id, exc)
+        raise
+
+
+def get_memories(user_id: str, limit: int = 40):
+    """Renvoie les souvenirs les plus récents, du plus ancien au plus récent."""
+    if not supabase:
+        return []
+    try:
+        res = (
+            supabase.table("user_memories")
+            .select("fact, category")
+            .eq("user_id", user_id)
+            .order("id", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return list(reversed(res.data)) if res.data else []
+    except Exception as exc:
+        logger.error("get_memories failed (user=%s): %s", user_id, exc)
+        return []
+
+
+def clear_memories(user_id: str):
+    """Efface toute la mémoire d'un utilisateur."""
+    if not supabase:
+        return
+    try:
+        supabase.table("user_memories").delete().eq("user_id", user_id).execute()
+    except Exception as exc:
+        logger.error("clear_memories failed (user=%s): %s", user_id, exc)
+        
 def _action_row(row: dict):
     return {
         "id": row["id"], "tool": row["tool"],
