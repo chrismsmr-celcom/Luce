@@ -1273,26 +1273,27 @@ def call_llm(
 
     for provider in PROVIDERS:
         try:
-            return provider["client"].chat.completions.create(
+            response = provider["client"].chat.completions.create(
                 model=provider["model"],
                 **kwargs,
             )
-
+            logger.info(
+                "LLM success: provider=%s model=%s",
+                provider["name"],
+                provider["model"],
+            )
+            return response
         except Exception as exc:
+            error = _short_error(exc)
             logger.warning(
                 "LLM provider %s failed: %s",
                 provider["name"],
-                _short_error(exc),
+                error,
             )
-
-            errors.append(
-                f"{provider['name']}: "
-                f"{_short_error(exc)}"
-            )
+            errors.append(f"{provider['name']}: {error}")
 
     raise RuntimeError(
-        "All LLM providers failed: "
-        + " | ".join(errors)
+        "All LLM providers failed: " + " | ".join(errors)
     )
 
 
