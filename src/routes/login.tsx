@@ -62,6 +62,17 @@ function Login() {
   }
 
   return (
+    <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
+      <section className="relative flex min-h-72 flex-col justify-end overflow-hidden bg-brand-red p-6 sm:p-10 lg:min-h-screen lg:p-14">
+        <LuceArt className="absolute inset-y-0 right-0 h-full w-[45%] lg:w-1/2" />
+        <div className="relative z-10 max-w-[55%] lg:max-w-[50%]">
+          <h1 className="font-display text-6xl font-bold leading-[0.82] tracking-tighter text-brand-cream sm:text-8xl lg:text-[9rem]">
+          </h1>
+          <p className="mt-4 font-display text-base font-medium leading-tight text-black sm:text-xl lg:mt-6 lg:text-3xl">         
+            </p>
+        </div>
+      </section>
+
       <section className="flex items-center justify-center bg-background px-6 py-12">
         <div className="w-full max-w-sm">
           <img
