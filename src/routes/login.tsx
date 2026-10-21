@@ -1,3 +1,4 @@
+
 import { useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ShieldCheck } from "lucide-react";
@@ -11,17 +12,28 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Connexion — Luce" },
-      { name: "description", content: "Connecte-toi à Luce, l'assistant qui se branche à tes outils." },
+      {
+        name: "description",
+        content: "Connecte-toi à Luce, l'assistant qui se branche à tes outils.",
+      },
     ],
   }),
   component: Login,
 });
 
 function friendlyError(message: string) {
-  if (/invalid login credentials/i.test(message)) return "E-mail ou mot de passe incorrect.";
-  if (/email not confirmed/i.test(message)) return "Confirme d'abord ton adresse e-mail (vérifie ta boîte mail).";
-  if (/already registered/i.test(message)) return "Un compte existe déjà avec cette adresse. Connecte-toi.";
-  if (/rate limit/i.test(message)) return "Trop de tentatives. Réessaie dans quelques minutes.";
+  if (/invalid login credentials/i.test(message))
+    return "E-mail ou mot de passe incorrect.";
+
+  if (/email not confirmed/i.test(message))
+    return "Confirme d'abord ton adresse e-mail (vérifie ta boîte mail).";
+
+  if (/already registered/i.test(message))
+    return "Un compte existe déjà avec cette adresse. Connecte-toi.";
+
+  if (/rate limit/i.test(message))
+    return "Trop de tentatives. Réessaie dans quelques minutes.";
+
   return message;
 }
 
@@ -32,27 +44,45 @@ function Login() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+
   const signup = mode === "signup";
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+
     if (!supabase || busy) return;
+
     setBusy(true);
     setError(null);
     setInfo(null);
+
     try {
       if (signup) {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: {
+            emailRedirectTo: window.location.origin,
+          },
         });
-        if (error) setError(friendlyError(error.message));
-        else if (!data.session) setInfo("Compte créé. Clique sur le lien reçu par e-mail, puis connecte-toi.");
+
+        if (error) {
+          setError(friendlyError(error.message));
+        } else if (!data.session) {
+          setInfo(
+            "Compte créé. Clique sur le lien reçu par e-mail, puis connecte-toi."
+          );
+        }
       } else {
-        // On success, onAuthStateChange (useAuth) redirects to "/".
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) setError(friendlyError(error.message));
+        // useAuth gère la redirection après connexion.
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          setError(friendlyError(error.message));
+        }
       }
     } catch {
       setError("Impossible de joindre le serveur. Réessaie.");
@@ -63,13 +93,22 @@ function Login() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
-      
-<section className="relative flex min-h-72 flex-col justify-end overflow-hidden bg-brand-red p-6 sm:p-10 lg:min-h-screen lg:p-14">
-  <LuceArt className="absolute inset-y-0 right-0 h-full w-[45%] lg:w-1/2" />
-</section>
 
+      {/* PANNEAU VISUEL LUCE */}
+      <section className="relative isolate min-h-72 overflow-hidden bg-brand-red lg:min-h-screen">
+
+        <LuceArt
+          className="absolute inset-0 h-full w-full"
+        />
+
+      </section>
+
+      {/* PANNEAU CONNEXION */}
       <section className="flex items-center justify-center bg-background px-6 py-12">
+
         <div className="w-full max-w-sm">
+
+          {/* LOGO */}
           <img
             src="/logo-192.png"
             alt="Luce"
@@ -77,16 +116,27 @@ function Login() {
             height={64}
             className="mb-6 size-16 rounded-2xl object-cover shadow-sm"
           />
+
+          {/* TITRE */}
           <h2 className="font-display text-2xl font-bold tracking-tight">
             {signup ? "Créer un compte" : "Connexion"}
           </h2>
+
           <p className="mt-1 text-sm text-muted-foreground">
-            {signup ? "Quelques secondes pour démarrer avec Luce." : "Content de te revoir."}
+            {signup
+              ? "Quelques secondes pour démarrer avec Luce."
+              : "Content de te revoir."}
           </p>
 
+          {/* FORMULAIRE */}
           <form onSubmit={submit} className="mt-6 space-y-4">
+
+            {/* EMAIL */}
             <div className="space-y-1.5">
-              <Label htmlFor="email">Adresse e-mail</Label>
+              <Label htmlFor="email">
+                Adresse e-mail
+              </Label>
+
               <Input
                 id="email"
                 type="email"
@@ -97,39 +147,74 @@ function Login() {
                 className="h-11"
               />
             </div>
+
+            {/* MOT DE PASSE */}
             <div className="space-y-1.5">
-              <Label htmlFor="password">Mot de passe</Label>
+              <Label htmlFor="password">
+                Mot de passe
+              </Label>
+
               <Input
                 id="password"
                 type="password"
-                autoComplete={signup ? "new-password" : "current-password"}
+                autoComplete={
+                  signup ? "new-password" : "current-password"
+                }
                 required
                 minLength={signup ? 8 : undefined}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="h-11"
               />
-              {signup && <p className="text-xs text-muted-foreground">8 caractères minimum.</p>}
+
+              {signup && (
+                <p className="text-xs text-muted-foreground">
+                  8 caractères minimum.
+                </p>
+              )}
             </div>
 
+            {/* ERREURS */}
             {error && (
-              <p role="alert" className="text-sm text-destructive">
+              <p
+                role="alert"
+                className="text-sm text-destructive"
+              >
                 {error}
               </p>
             )}
+
+            {/* INFORMATIONS */}
             {info && (
-              <p role="status" className="text-sm text-success">
+              <p
+                role="status"
+                className="text-sm text-success"
+              >
                 {info}
               </p>
             )}
 
-            <Button type="submit" disabled={busy} className="h-11 w-full rounded-full font-semibold">
-              {busy ? "Patiente…" : signup ? "Créer mon compte" : "Se connecter"}
+            {/* BOUTON */}
+            <Button
+              type="submit"
+              disabled={busy}
+              className="h-11 w-full rounded-full font-semibold"
+            >
+              {busy
+                ? "Patiente…"
+                : signup
+                  ? "Créer mon compte"
+                  : "Se connecter"}
             </Button>
+
           </form>
 
+          {/* BASCULE CONNEXION / INSCRIPTION */}
           <p className="mt-5 text-sm text-muted-foreground">
-            {signup ? "Déjà un compte ?" : "Pas encore de compte ?"}{" "}
+            {signup
+              ? "Déjà un compte ?"
+              : "Pas encore de compte ?"}{" "}
+
             <button
               type="button"
               onClick={() => {
@@ -143,11 +228,16 @@ function Login() {
             </button>
           </p>
 
+          {/* SÉCURITÉ */}
           <div className="mt-10 flex items-center gap-2 text-xs text-muted-foreground">
-            <ShieldCheck className="size-4 text-success" /> Protégé par Cerbère
+            <ShieldCheck className="size-4 text-success" />
+            <span>Protégé par Cerbère</span>
           </div>
+
         </div>
       </section>
+
     </div>
   );
 }
+
