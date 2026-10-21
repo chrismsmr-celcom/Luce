@@ -4,7 +4,7 @@ import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ZipperArt } from "@/components/luce/zipper-art";
+import { LuceArt } from "@/components/luce/luce-art";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/login")({
@@ -64,7 +64,7 @@ function Login() {
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
       <section className="relative flex min-h-72 flex-col justify-end overflow-hidden bg-brand-red p-6 sm:p-10 lg:min-h-screen lg:p-14">
-        <ZipperArt className="absolute inset-y-0 right-0 h-full w-[45%] lg:w-1/2" />
+        <LuceArt className="absolute inset-y-0 right-0 h-full w-[45%] lg:w-1/2" />
         <div className="relative z-10 max-w-[55%] lg:max-w-[50%]">
           <h1 className="font-display text-6xl font-bold leading-[0.82] tracking-tighter text-brand-cream sm:text-8xl lg:text-[9rem]">
             LUCE
