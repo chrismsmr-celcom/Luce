@@ -77,6 +77,13 @@ function Login() {
 
       <section className="flex items-center justify-center bg-background px-6 py-12">
         <div className="w-full max-w-sm">
+          <img
+            src="/logo-192.png"
+            alt="Luce"
+            width={64}
+            height={64}
+            className="mb-6 size-16 rounded-2xl object-cover shadow-sm"
+          />
           <h2 className="font-display text-2xl font-bold tracking-tight">
             {signup ? "Créer un compte" : "Connexion"}
           </h2>

@@ -82,9 +82,13 @@ function LuceSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="hover:bg-transparent">
               <Link to="/">
-                <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary font-display text-base font-bold text-primary-foreground">
-                  L
-                </div>
+                <img
+                  src="/logo-64.png"
+                  alt="Luce"
+                  width={32}
+                  height={32}
+                  className="size-8 shrink-0 rounded-lg object-cover"
+                />
                 <div className="min-w-0 leading-tight">
                   <div className="font-display text-base font-bold tracking-wide">LUCE</div>
                   <div className="truncate text-xs text-muted-foreground">Chef de cabinet IA</div>
@@ -153,4 +157,3 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
     </div>
   );
 }
-
