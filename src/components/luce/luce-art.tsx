@@ -1,20 +1,24 @@
 import type { SVGProps } from "react";
 
-/** Illustration de la page de connexion : le petit monde de Luce (village, collines, mail, agenda). */
+/**
+ * Illustration plein cadre de la page de connexion : le petit monde de Luce.
+ * Le ciel est transparent (c'est le fond rouge du panneau), les collines débordent
+ * sur les côtés. À placer en `absolute inset-0 h-full w-full`.
+ */
 export function LuceArt(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 480 720"
+      viewBox="0 0 900 800"
       fill="none"
       role="img"
       aria-label="Le village de Luce : des maisons rondes aux fenêtres à lunettes, des collines vertes et Luce au premier plan"
-      preserveAspectRatio="xMaxYMax meet"
+      preserveAspectRatio="xMidYMax slice"
       {...props}
     >
 
   <defs>
-        <g id="house">
+    <g id="house">
       <rect x="-40" y="0" width="80" height="62" rx="16" fill="#F5EBDD"/>
       <rect x="16" y="-44" width="11" height="34" rx="4" fill="#8B5A3C"/>
       <path d="M-52 8Q0 -66 52 8Z" fill="#4472B8"/>
@@ -31,53 +35,62 @@ export function LuceArt(props: SVGProps<SVGSVGElement>) {
       <circle cx="0" cy="-8" r="26" fill="currentColor"/>
       <circle cx="-9" cy="-16" r="7" fill="#fff" opacity=".12"/>
     </g>
+    <g id="cloud">
+      <path d="M0 40a26 26 0 0 1 48-12 22 22 0 0 1 42 10 18 18 0 0 1-4 36H16A20 20 0 0 1 0 40z" fill="#F5EBDD"/>
+    </g>
   </defs>
-    <circle cx="372" cy="120" r="78" fill="#FFF1C9" opacity=".25"/>
-  <circle cx="372" cy="120" r="56" fill="#FFF1C9"/>
-  <g fill="#F5EBDD">
-    <path d="M30 200a26 26 0 0 1 48-12 22 22 0 0 1 42 10 18 18 0 0 1-4 36H46a20 20 0 0 1-16-34z"/>
-    <path d="M300 300a20 20 0 0 1 38-8 17 17 0 0 1 32 8 14 14 0 0 1-2 28h-56a14 14 0 0 1-12-28z" opacity=".9"/>
+    <circle cx="735" cy="150" r="104" fill="#FFF1C9" opacity=".22"/>
+  <circle cx="735" cy="150" r="72" fill="#FFF1C9"/>
+    <use href="#cloud" transform="translate(500 160) scale(1.3)"/>
+  <use href="#cloud" transform="translate(820 330) scale(.8)" opacity=".85"/>
+  <use href="#cloud" transform="translate(40 330) scale(.9)" opacity=".7"/>
+    <g fill="#FFF7E0">
+    <path d="M470 290l7 18 18 7-18 7-7 18-7-18-18-7 18-7z"/>
+    <path d="M860 450l5 12 12 5-12 5-5 12-5-12-12-5 12-5z"/>
+    <path d="M120 420l5 12 12 5-12 5-5 12-5-12-12-5 12-5z"/>
+    <path d="M640 80l4 10 10 4-10 4-4 10-4-10-10-4 10-4z"/>
   </g>
-    <g transform="rotate(-10 86 300)">
-    <rect x="44" y="270" width="84" height="58" rx="10" fill="#fff"/>
-    <path d="M48 278l38 27 38-27" stroke="#4472B8" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
-    <circle cx="122" cy="272" r="10" fill="#E8695F"/>
+    <g transform="rotate(-10 590 300)">
+    <rect x="540" y="268" width="100" height="70" rx="12" fill="#fff"/>
+    <path d="M546 278l44 32 44-32" stroke="#4472B8" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
+    <circle cx="634" cy="270" r="12" fill="#E8695F"/>
   </g>
-  <g transform="rotate(8 410 250)">
-    <rect x="378" y="216" width="64" height="70" rx="10" fill="#fff"/>
-    <path d="M378 226a10 10 0 0 1 10-10h44a10 10 0 0 1 10 10v14H378z" fill="#E8695F"/>
-    <g fill="#4472B8"><circle cx="397" cy="258" r="4.5"/><circle cx="410" cy="258" r="4.5"/><circle cx="423" cy="258" r="4.5"/><circle cx="397" cy="272" r="4.5"/><circle cx="410" cy="272" r="4.5" fill="#6DBB6F"/></g>
+  <g transform="rotate(8 790 330)">
+    <rect x="752" y="290" width="76" height="84" rx="12" fill="#fff"/>
+    <path d="M752 302a12 12 0 0 1 12-12h52a12 12 0 0 1 12 12v18H752z" fill="#E8695F"/>
+    <g fill="#4472B8"><circle cx="774" cy="344" r="5.5"/><circle cx="790" cy="344" r="5.5"/><circle cx="806" cy="344" r="5.5"/><circle cx="774" cy="360" r="5.5"/><circle cx="790" cy="360" r="5.5" fill="#6DBB6F"/></g>
   </g>
-  <g fill="#FFF7E0">
-    <path d="M200 170l6 15 15 6-15 6-6 15-6-15-15-6 15-6z"/>
-    <path d="M450 370l4 10 10 4-10 4-4 10-4-10-10-4 10-4z"/>
-    <path d="M30 400l4 10 10 4-10 4-4 10-4-10-10-4 10-4z"/>
-  </g>
-    <path d="M0 450Q110 360 240 410T480 390V720H0Z" fill="#3F8F4E"/>
+  <circle cx="690" cy="236" r="26" fill="#fff"/>
+  <path d="M678 237l9 9 15-18" stroke="#6DBB6F" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M0 470Q200 380 420 440T900 405V800H0Z" fill="#3F8F4E"/>
   <g style={{ color: "#2F7D43" }}>
-    <use href="#tree" transform="translate(52 400) scale(.7)"/>
-    <use href="#tree" transform="translate(96 418) scale(.55)"/>
-    <use href="#tree" transform="translate(436 392) scale(.7)"/>
+    <use href="#tree" transform="translate(110 430) scale(.75)"/>
+    <use href="#tree" transform="translate(160 446) scale(.55)"/>
+    <use href="#tree" transform="translate(840 400) scale(.8)"/>
+    <use href="#tree" transform="translate(690 420) scale(.6)"/>
   </g>
-  <use href="#house" transform="translate(262 380) scale(.55)"/>
-    <path d="M0 520Q150 410 310 480T480 460V720H0Z" fill="#5DAF5F"/>
+  <use href="#house" transform="translate(48 452) scale(.7)"/>
+  <use href="#house" transform="translate(575 408) scale(.62)"/>
+    <path d="M0 565Q260 450 520 530T900 495V800H0Z" fill="#5DAF5F"/>
   <g style={{ color: "#3F8F4E" }}>
-    <use href="#tree" transform="translate(30 470) scale(.95)"/>
-    <use href="#tree" transform="translate(206 476) scale(.75)"/>
-    <use href="#tree" transform="translate(452 480) scale(1)"/>
+    <use href="#tree" transform="translate(30 520) scale(1)"/>
+    <use href="#tree" transform="translate(330 505) scale(.8)"/>
+    <use href="#tree" transform="translate(865 505) scale(1.05)"/>
+    <use href="#tree" transform="translate(560 500) scale(.7)"/>
   </g>
-  <use href="#house" transform="translate(112 455) scale(.9)"/>
-  <use href="#house" transform="translate(352 425) scale(1.15)"/>
-    <path d="M250 720C190 670 340 630 280 585S236 520 300 492" stroke="#F5EBDD" strokeWidth="34" strokeLinecap="round" opacity=".95"/>
-    <path d="M0 610Q190 530 480 590V720H0Z" fill="#7CC66F"/>
+  <use href="#house" transform="translate(185 485) scale(1.3)"/>
+  <use href="#house" transform="translate(430 470) scale(1)"/>
+    <path d="M390 800C300 745 520 705 445 650S385 575 432 540" stroke="#F5EBDD" strokeWidth="44" strokeLinecap="round" opacity=".95"/>
+    <path d="M0 690Q300 600 900 670V800H0Z" fill="#7CC66F"/>
   <g style={{ color: "#5DAF5F" }}>
-    <use href="#tree" transform="translate(430 600) scale(1.25)"/>
+    <use href="#tree" transform="translate(80 650) scale(1.3)"/>
+    <use href="#tree" transform="translate(850 650) scale(1.3)"/>
   </g>
   <g fill="#F6C453">
-    <circle cx="330" cy="650" r="6"/><circle cx="360" cy="672" r="5"/><circle cx="300" cy="690" r="5"/><circle cx="410" cy="690" r="6"/>
+    <circle cx="260" cy="740" r="7"/><circle cx="300" cy="765" r="6"/><circle cx="200" cy="775" r="6"/><circle cx="830" cy="770" r="7"/>
   </g>
-  <g fill="#E8695F"><circle cx="345" cy="690" r="5"/><circle cx="385" cy="650" r="5"/></g>
-    <g transform="translate(40 400) scale(.55)">
+  <g fill="#E8695F"><circle cx="230" cy="765" r="6"/><circle cx="330" cy="735" r="6"/><circle cx="790" cy="740" r="6"/></g>
+    <g transform="translate(510 345) scale(.76)">
     <path d="M60 600c0-70 45-120 140-120s140 50 140 120z" fill="#1F2D4D"/>
     <path d="M165 482l35 40 35-40" fill="#F5EBDD"/>
     <rect x="172" y="395" width="56" height="95" rx="14" fill="#E9A06F"/>
